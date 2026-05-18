@@ -7,14 +7,15 @@ pipeline {
         ECR_REGISTRY = "834922934378.dkr.ecr.ap-south-1.amazonaws.com"
         IMAGE_TAG = "${BUILD_NUMBER}"
         CLUSTER_NAME = "sports-nexus-eks"
+        GIT_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-app.git"
+        HELM_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
+                git branch: 'main', url: "${GIT_REPO}"
             }
         }
 
@@ -63,43 +64,24 @@ pipeline {
                 '''
             }
         }
+
         stage('Update Helm Image Tag') {
-    steps {
-        sh """
-        git clone https://github.com/YOUR_USERNAME/sports-nexus-helm.git
-        cd sports-nexus-helm/sports-nexus
+            steps {
+                sh '''
+                rm -rf sports-nexus-helm
+                git clone $HELM_REPO
+                cd sports-nexus-helm/sports-nexus
 
-        sed -i 's/tag: .*/tag: ${BUILD_NUMBER}/' values.yaml
+                sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" values.yaml
 
-        git config user.email "jenkins@devops.com"
-        git config user.name "jenkins"
+                git config user.email "jenkins@devops.com"
+                git config user.name "jenkins"
 
-        git add .
-        git commit -m "update image tag ${BUILD_NUMBER}"
-        git push
-        """
-    }
-}
-       stage('Update Helm Image Tag') {
-    steps {
-        sh """
-        git clone https://github.com/YOUR_USERNAME/sports-nexus-helm.git
-        cd sports-nexus-helm/sports-nexus
-
-        sed -i 's/tag: .*/tag: ${BUILD_NUMBER}/' values.yaml
-
-        git config user.email "jenkins@devops.com"
-        git config user.name "jenkins"
-
-        git add .
-        git commit -m "update image tag ${BUILD_NUMBER}"
-        git push
-        """
-    }
-}
-
-
-
-
+                git add .
+                git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
+                git push
+                '''
+            }
+        }
     }
 }
