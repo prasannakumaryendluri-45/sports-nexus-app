@@ -92,15 +92,11 @@ pipeline {
 
                     cd sports-nexus-helm/sports-nexus
 
-                    sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
-
-                    git config user.email "jenkins-ci@sportsnexus.com"
-                    git config user.name "jenkins-ci"
+                   sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
 
                     git add values.yaml
-                    git commit -m "update image tag ${IMAGE_TAG}" || echo "no changes"
-
-                    git push https://$GIT_USER:$GIT_TOKEN@github.com/prasannakumaryendluri-45/sports-nexus-helm.git main
+                    git commit -m "update image tag ${IMAGE_TAG}" || true
+                    git push origin main
                 '''
             }
         }
