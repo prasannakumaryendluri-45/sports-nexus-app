@@ -77,6 +77,8 @@ pipeline {
         stage('Update Helm Image Tag') {
     steps {
         sh '''
+        set -e
+
         rm -rf sports-nexus-helm
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
@@ -85,20 +87,22 @@ pipeline {
         echo "Before update:"
         cat values.yaml
 
-        # FIXED SAFE UPDATE (works for your YAML)
-        sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" values.yaml
+        # SAFE UPDATE (works with your YAML structure)
+        sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" values.yaml
 
         echo "After update:"
         cat values.yaml
 
         git config user.email "jenkins@sportsnexus.com"
-        git config user.name "Jenkins CI"
+        git config user.name "jenkins-ci"
 
         git add values.yaml
 
-        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
+        git diff --cached || true
 
-        git push
+        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes to commit"
+
+        git push origin main
         '''
     }
 }
