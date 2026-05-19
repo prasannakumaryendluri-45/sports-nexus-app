@@ -79,14 +79,12 @@ pipeline {
 
         stage('Update Helm Image Tag') {
     steps {
+        cleanWs()
+
         sh '''
         set -e
 
-        rm -rf sports-nexus-helm*
-
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
-
-        ls -R sports-nexus-helm
 
         cd sports-nexus-helm/sports-nexus
 
@@ -104,7 +102,6 @@ pipeline {
         git config user.name "jenkins-ci"
 
         git add values.yaml
-
         git commit -m "update image tag ${IMAGE_TAG}" || echo "no changes"
 
         git push origin main
