@@ -80,17 +80,23 @@ pipeline {
         rm -rf sports-nexus-helm
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
-        cd sports-nexus-helm
+        cd sports-nexus-helm/sports-nexus
 
-        ls -l
+        echo "Before update:"
+        cat values.yaml
 
         sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" values.yaml
+
+        echo "After update:"
+        cat values.yaml
 
         git config user.email "jenkins@sportsnexus.com"
         git config user.name "Jenkins CI"
 
-        git add .
-        git commit -m "update image tag ${IMAGE_TAG}" || true
+        git add values.yaml
+
+        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes to commit"
+
         git push
         '''
     }
