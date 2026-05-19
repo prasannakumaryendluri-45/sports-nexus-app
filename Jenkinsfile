@@ -20,10 +20,12 @@ pipeline {
         }
 
         stage('Maven Build') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
+    steps {
+        dir('backend') {
+            sh 'mvn clean package -DskipTests'
         }
+    }
+}
 
         stage('SonarQube Scan') {
             steps {
