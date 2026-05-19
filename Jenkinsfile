@@ -28,14 +28,16 @@ pipeline {
 }
 
         stage('SonarQube Scan') {
-            steps {
-                sh '''
+    steps {
+        dir('backend') {
+            sh '''
                 mvn sonar:sonar \
                 -Dsonar.host.url=http://13.201.15.127:9000 \
                 -Dsonar.login=admin
-                '''
-            }
+            '''
         }
+    }
+}
 
         stage('Docker Build') {
             steps {
