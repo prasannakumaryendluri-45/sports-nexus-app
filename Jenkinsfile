@@ -6,21 +6,22 @@ pipeline {
         ECR_REPO = "sports-nexus"
         ECR_REGISTRY = "834922934378.dkr.ecr.ap-south-1.amazonaws.com"
         IMAGE_TAG = "${BUILD_NUMBER}"
+
         CLUSTER_NAME = "sports-nexus-eks"
 
-        GIT_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-app.git"
+        APP_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-app.git"
         HELM_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main', url: "${GIT_REPO}"
+                git branch: 'main', url: "${APP_REPO}"
             }
         }
 
-        stage('Maven Build') {
+        stage('Build Backend (Maven)') {
             steps {
                 dir('backend') {
                     sh 'mvn clean package -DskipTests'
@@ -28,7 +29,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Scan') {
+        stage('SonarQube Analysis') {
             environment {
                 SONAR_TOKEN = credentials('sonar-token')
             }
@@ -43,7 +44,7 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
+        stage('Build Docker Image') {
             steps {
                 dir('backend') {
                     sh '''
@@ -54,7 +55,7 @@ pipeline {
             }
         }
 
-        stage('ECR Login & Push') {
+        stage('Push to ECR') {
             steps {
                 sh '''
                     aws ecr get-login-password --region $AWS_REGION \
@@ -65,40 +66,35 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS') {
+        stage('Update Helm Values (GitOps)') {
             steps {
                 sh '''
-                    aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
-
-                    kubectl set image deployment/sports-nexus-app \
-                    app=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
-                    --record || true
-                '''
-            }
-        }
-
-        stage('Update Helm Image Tag') {
-            environment {
-                GIT_USER = "prasannakumaryendluri-45"
-                GIT_TOKEN = credentials('github-token')
-            }
-
-            steps {
-                sh '''
-                    set -e
-
                     rm -rf sports-nexus-helm
                     git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
                     cd sports-nexus-helm/sports-nexus
 
-                   sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
+                    # update only image tag
+                    sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
+
+                    git config user.email "jenkins-ci@sportsnexus.com"
+                    git config user.name "jenkins-ci"
 
                     git add values.yaml
-                    git commit -m "update image tag ${IMAGE_TAG}" || true
+                    git commit -m "update image tag to ${IMAGE_TAG}" || echo "No changes"
                     git push origin main
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ CI/CD Pipeline Completed Successfully"
+        }
+
+        failure {
+            echo "❌ Pipeline Failed - Check Logs"
         }
     }
 }
