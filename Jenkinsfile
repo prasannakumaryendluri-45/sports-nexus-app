@@ -28,12 +28,15 @@ pipeline {
 }
 
         stage('SonarQube Scan') {
+    environment {
+        SONAR_TOKEN = credentials('sonar-token')
+    }
     steps {
         dir('backend') {
             sh '''
-                mvn sonar:sonar \
+                mvn clean verify sonar:sonar \
                 -Dsonar.host.url=http://13.201.15.127:9000 \
-                -Dsonar.login=admin
+                -Dsonar.login=$SONAR_TOKEN
             '''
         }
     }
