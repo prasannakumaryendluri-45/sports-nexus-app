@@ -83,7 +83,6 @@ pipeline {
         set -e
 
         rm -rf sports-nexus-helm
-
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
         cd sports-nexus-helm/sports-nexus
@@ -91,8 +90,10 @@ pipeline {
         echo "===== BEFORE ====="
         cat values.yaml
 
-        # update only image tag safely
-        sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
+        echo "IMAGE_TAG=$IMAGE_TAG"
+
+        # FIXED UPDATE
+        sed -i "s|tag: latest|tag: ${IMAGE_TAG}|" values.yaml
 
         echo "===== AFTER ====="
         cat values.yaml
@@ -107,4 +108,6 @@ pipeline {
         git push origin main
         '''
     }
+}
+}
 }
