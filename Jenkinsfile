@@ -75,22 +75,23 @@ pipeline {
         }
 
         stage('Update Helm Image Tag') {
-            steps {
-                sh '''
-                rm -rf sports-nexus-helm
-                git clone $HELM_REPO
-                cd sports-nexus-helm/sports-nexus
+    steps {
+        sh '''
+        rm -rf sports-nexus-helm
+        git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
-                sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" values.yaml
+        cd sports-nexus-helm
 
-                git config user.email "jenkins@devops.com"
-                git config user.name "jenkins"
+        ls -l
 
-                git add .
-                git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
-                git push
-                '''
-            }
-        }
+        sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" values.yaml
+
+        git config user.email "jenkins@sportsnexus.com"
+        git config user.name "Jenkins CI"
+
+        git add .
+        git commit -m "update image tag ${IMAGE_TAG}" || true
+        git push
+        '''
     }
 }
