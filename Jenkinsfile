@@ -89,17 +89,9 @@ pipeline {
             git add values.yaml
             git commit -m "update image tag ${IMAGE_TAG}" || echo "no changes"
 
-            git push https://$GIT_USER:$github-token@github.com/prasannakumaryendluri-45/sports-nexus-helm.git main
+            git push https://${GIT_USER}:${GIT_TOKEN}@github.com/${GIT_USER}/sports-nexus-helm.git main
         '''
     }
 }
-    post {
-        success {
-            echo "✅ CI/CD Pipeline Completed Successfully"
-        }
-
-        failure {
-            echo "❌ Pipeline Failed - Check Logs"
-        }
-    }
+}
 }
