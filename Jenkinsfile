@@ -83,24 +83,27 @@ pipeline {
         set -e
 
         rm -rf sports-nexus-helm
+
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
         cd sports-nexus-helm/sports-nexus
 
-        echo "Before:"
+        echo "===== BEFORE ====="
         cat values.yaml
 
-        # FIXED WAY (works with nested YAML)
-        yq e '.image.tag = strenv(IMAGE_TAG)' -i values.yaml
+        # update only image tag safely
+        sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
 
-        echo "After:"
+        echo "===== AFTER ====="
         cat values.yaml
 
         git config user.email "jenkins-ci@sportsnexus.com"
         git config user.name "jenkins-ci"
 
         git add values.yaml
-        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
+
+        git commit -m "update image tag ${IMAGE_TAG}" || echo "no changes"
+
         git push origin main
         '''
     }
