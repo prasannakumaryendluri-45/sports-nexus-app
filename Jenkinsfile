@@ -7,6 +7,7 @@ pipeline {
         ECR_REGISTRY = "834922934378.dkr.ecr.ap-south-1.amazonaws.com"
         IMAGE_TAG = "${BUILD_NUMBER}"
         CLUSTER_NAME = "sports-nexus-eks"
+
         GIT_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-app.git"
         HELM_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git"
     }
@@ -20,44 +21,46 @@ pipeline {
         }
 
         stage('Maven Build') {
-    steps {
-        dir('backend') {
-            sh 'mvn clean package -DskipTests'
+            steps {
+                dir('backend') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
         }
-    }
-}
 
         stage('SonarQube Scan') {
-    environment {
-        SONAR_TOKEN = credentials('sonar-token')
-    }
-    steps {
-        dir('backend') {
-            sh '''
-                mvn clean verify sonar:sonar \
-                -Dsonar.host.url=http://13.201.15.127:9000 \
-                -Dsonar.login=$SONAR_TOKEN
-            '''
+            environment {
+                SONAR_TOKEN = credentials('sonar-token')
+            }
+            steps {
+                dir('backend') {
+                    sh '''
+                        mvn clean verify sonar:sonar \
+                        -Dsonar.host.url=http://13.201.15.127:9000 \
+                        -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Docker Build') {
-    steps {
-        dir('backend') {
-            sh '''
-            docker build -t $ECR_REPO:$IMAGE_TAG .
-            docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-            '''
+            steps {
+                dir('backend') {
+                    sh '''
+                        docker build -t $ECR_REPO:$IMAGE_TAG .
+                        docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('ECR Login & Push') {
             steps {
                 sh '''
-                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
-                docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+                    aws ecr get-login-password --region $AWS_REGION \
+                    | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+                    docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
                 '''
             }
         }
@@ -65,45 +68,50 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 sh '''
-                aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+                    aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
 
-                kubectl set image deployment/sports-nexus-app \
-                app=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
-                --record || true
+                    kubectl set image deployment/sports-nexus-app \
+                    app=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
+                    --record || true
                 '''
             }
         }
 
         stage('Update Helm Image Tag') {
-    steps {
-        sh '''
-        set -e
+            steps {
+                sh '''
+                    set -e
 
-        rm -rf sports-nexus-helm
-        git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
+                    rm -rf sports-nexus-helm
+                    git clone $HELM_REPO
 
-        echo "Root contents:"
-        ls -l sports-nexus-helm
+                    cd sports-nexus-helm/sports-nexus
 
-        echo "Helm chart contents:"
-        ls -l sports-nexus-helm/sports-nexus
+                    echo "Before update:"
+                    cat values.yaml
 
-        cd sports-nexus-helm/sports-nexus
+                    sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" values.yaml
 
-        echo "Before update:"
-        cat values.yaml
+                    echo "After update:"
+                    cat values.yaml
 
-        sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" values.yaml
+                    git config user.email "jenkins-ci@sportsnexus.com"
+                    git config user.name "jenkins-ci"
 
-        echo "After update:"
-        cat values.yaml
+                    git add values.yaml
+                    git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
+                    git push origin main
+                '''
+            }
+        }
+    }
 
-        git config user.email "jenkins-ci@sportsnexus.com"
-        git config user.name "jenkins-ci"
-
-        git add values.yaml
-        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
-        git push origin main
-        '''
+    post {
+        success {
+            echo "Pipeline SUCCESS 🚀"
+        }
+        failure {
+            echo "Pipeline FAILED ❌ check logs"
+        }
     }
 }
