@@ -79,30 +79,38 @@ pipeline {
 
         stage('Update Helm Image Tag') {
     steps {
-        cleanWs()
-
         sh '''
         set -e
 
+        echo "Cloning Helm repo..."
+        rm -rf sports-nexus-helm
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
-        cd sports-nexus-helm/sports-nexus
+        cd sports-nexus-helm
 
-        echo "===== BEFORE ====="
+        echo "Repo structure:"
+        ls -R
+
+        # ALWAYS go to correct chart folder
+        cd sports-nexus
+
+        echo "Before update:"
         cat values.yaml
 
-        echo "IMAGE_TAG=$IMAGE_TAG"
-
+        # SAFE YAML UPDATE (works for your structure)
         sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
 
-        echo "===== AFTER ====="
+        echo "After update:"
         cat values.yaml
 
         git config user.email "jenkins-ci@sportsnexus.com"
         git config user.name "jenkins-ci"
 
         git add values.yaml
-        git commit -m "update image tag ${IMAGE_TAG}" || echo "no changes"
+
+        git diff --cached || true
+
+        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes to commit"
 
         git push origin main
         '''
