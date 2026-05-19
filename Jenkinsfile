@@ -85,6 +85,7 @@ pipeline {
         echo "Before update:"
         cat values.yaml
 
+        # FIXED SAFE UPDATE (works for your YAML)
         sed -i "s/tag: .*/tag: ${IMAGE_TAG}/" values.yaml
 
         echo "After update:"
@@ -95,7 +96,7 @@ pipeline {
 
         git add values.yaml
 
-        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes to commit"
+        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
 
         git push
         '''
