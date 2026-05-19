@@ -89,7 +89,7 @@ pipeline {
             git add values.yaml
             git commit -m "update image tag ${IMAGE_TAG}" || echo "no changes"
 
-            git push https://$GIT_USER:$githun-token@github.com/prasannakumaryendluri-45/sports-nexus-helm.git main
+            git push https://$GIT_USER:$github-token@github.com/prasannakumaryendluri-45/sports-nexus-helm.git main
         '''
     }
 }
