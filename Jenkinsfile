@@ -78,40 +78,34 @@ pipeline {
         }
 
         stage('Update Helm Image Tag') {
-            steps {
-                sh '''
-                    set -e
+    steps {
+        sh '''
+        set -e
 
-                    rm -rf sports-nexus-helm
-                    git clone $HELM_REPO
+        rm -rf sports-nexus-helm
+        git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
-                    cd sports-nexus-helm/sports-nexus
+        cd sports-nexus-helm
 
-                    echo "Before update:"
-                    cat values.yaml
+        echo "Folder structure:"
+        ls -R
 
-                    sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" values.yaml
+        cd sports-nexus
 
-                    echo "After update:"
-                    cat values.yaml
+        echo "Before:"
+        cat values.yaml
 
-                    git config user.email "jenkins-ci@sportsnexus.com"
-                    git config user.name "jenkins-ci"
+        sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" values.yaml
 
-                    git add values.yaml
-                    git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
-                    git push origin main
-                '''
-            }
-        }
-    }
+        echo "After:"
+        cat values.yaml
 
-    post {
-        success {
-            echo "Pipeline SUCCESS 🚀"
-        }
-        failure {
-            echo "Pipeline FAILED ❌ check logs"
-        }
+        git config user.email "jenkins-ci@sportsnexus.com"
+        git config user.name "jenkins-ci"
+
+        git add values.yaml
+        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
+        git push origin main
+        '''
     }
 }
