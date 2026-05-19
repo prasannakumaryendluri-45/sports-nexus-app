@@ -12,6 +12,9 @@ pipeline {
         HELM_REPO = "https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git"
     }
 
+     environment {
+    GIT_TOKEN = credentials('github-token')
+}
     stages {
 
         stage('Checkout') {
