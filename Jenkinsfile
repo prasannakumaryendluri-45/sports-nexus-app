@@ -82,26 +82,27 @@ pipeline {
         rm -rf sports-nexus-helm
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
+        echo "Root contents:"
+        ls -l sports-nexus-helm
+
+        echo "Helm chart contents:"
+        ls -l sports-nexus-helm/sports-nexus
+
         cd sports-nexus-helm/sports-nexus
 
         echo "Before update:"
         cat values.yaml
 
-        # SAFE UPDATE (works with your YAML structure)
         sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" values.yaml
 
         echo "After update:"
         cat values.yaml
 
-        git config user.email "jenkins@sportsnexus.com"
+        git config user.email "jenkins-ci@sportsnexus.com"
         git config user.name "jenkins-ci"
 
         git add values.yaml
-
-        git diff --cached || true
-
-        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes to commit"
-
+        git commit -m "update image tag ${IMAGE_TAG}" || echo "No changes"
         git push origin main
         '''
     }
