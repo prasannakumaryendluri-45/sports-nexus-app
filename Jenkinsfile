@@ -67,26 +67,32 @@ pipeline {
         }
 
         stage('Update Helm Values (GitOps)') {
-            steps {
-                sh '''
-                    rm -rf sports-nexus-helm
-                    git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
-
-                    cd sports-nexus-helm/sports-nexus
-
-                    # update only image tag
-                    sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
-
-                    git config user.email "jenkins-ci@sportsnexus.com"
-                    git config user.name "jenkins-ci"
-
-                    git add values.yaml
-                    git commit -m "update image tag to ${IMAGE_TAG}" || echo "No changes"
-                    git push origin main
-                '''
-            }
-        }
+    environment {
+        GIT_USER = "prasannakumaryendluri-45"
+        GIT_TOKEN = credentials('github-token')
     }
+
+    steps {
+        sh '''
+            set -e
+
+            rm -rf sports-nexus-helm
+            git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
+
+            cd sports-nexus-helm/sports-nexus
+
+            sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" values.yaml
+
+            git config user.email "jenkins-ci@sportsnexus.com"
+            git config user.name "jenkins-ci"
+
+            git add values.yaml
+            git commit -m "update image tag ${IMAGE_TAG}" || echo "no changes"
+
+            git push https://$GIT_USER:$GIT_TOKEN@github.com/prasannakumaryendluri-45/sports-nexus-helm.git main
+        '''
+    }
+}
 
     post {
         success {
