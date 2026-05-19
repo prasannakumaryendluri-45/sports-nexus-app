@@ -85,17 +85,13 @@ pipeline {
         rm -rf sports-nexus-helm
         git clone https://github.com/prasannakumaryendluri-45/sports-nexus-helm.git
 
-        cd sports-nexus-helm
-
-        echo "Folder structure:"
-        ls -R
-
-        cd sports-nexus
+        cd sports-nexus-helm/sports-nexus
 
         echo "Before:"
         cat values.yaml
 
-        sed -i "s|tag:.*|tag: ${IMAGE_TAG}|" values.yaml
+        # FIXED WAY (works with nested YAML)
+        yq e '.image.tag = strenv(IMAGE_TAG)' -i values.yaml
 
         echo "After:"
         cat values.yaml
