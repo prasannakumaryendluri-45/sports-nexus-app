@@ -43,13 +43,15 @@ pipeline {
 }
 
         stage('Docker Build') {
-            steps {
-                sh '''
-                docker build -t $ECR_REPO:$IMAGE_TAG .
-                docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-                '''
-            }
+    steps {
+        dir('backend') {
+            sh '''
+            docker build -t $ECR_REPO:$IMAGE_TAG .
+            docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+            '''
         }
+    }
+}
 
         stage('ECR Login & Push') {
             steps {
